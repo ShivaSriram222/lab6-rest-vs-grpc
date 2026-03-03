@@ -1,64 +1,83 @@
 #!/usr/bin/env python3
 
 ##
-## Sample Flask REST server implementing two methods
-##
-## Endpoint /api/image is a POST method taking a body containing an image
-## It returns a JSON document providing the 'width' and 'height' of the
-## image that was provided. The Python Image Library (pillow) is used to
-## proce#ss the image
-##
-## Endpoint /api/add/X/Y is a post or get method returns a JSON body
-## containing the sum of 'X' and 'Y'. The body of the request is ignored
-##
+## Sample Flask REST server implementing methods for Lab6
 ##
 from flask import Flask, request, Response
 import jsonpickle
 from PIL import Image
 import base64
 import io
+import logging
 
 # Initialize the Flask application
 app = Flask(__name__)
 
-import logging
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.DEBUG)
 
 @app.route('/api/add/<int:a>/<int:b>', methods=['GET', 'POST'])
-def add(a,b):
-    response = {'sum' : str( a + b)}
+def add(a, b):
+    response = {'sum': str(a + b)}
     response_pickled = jsonpickle.encode(response)
     return Response(response=response_pickled, status=200, mimetype="application/json")
 
-# route http posts to this method
 @app.route('/api/rawimage', methods=['POST'])
 def rawimage():
     r = request
-    # convert the data to a PIL image type so we can extract dimensions
     try:
         ioBuffer = io.BytesIO(r.data)
         img = Image.open(ioBuffer)
-    # build a response dict to send back to client
-        response = {
-            'width' : img.size[0],
-            'height' : img.size[1]
-            }
-    except:
-        response = { 'width' : 0, 'height' : 0}
-    # encode response using jsonpickle
-    response_pickled = jsonpickle.encode(response)
+        response = {'width': img.size[0], 'height': img.size[1]}
+    except Exception as e:
+        response = {'error': str(e), 'width': 0, 'height': 0}
 
+    response_pickled = jsonpickle.encode(response)
     return Response(response=response_pickled, status=200, mimetype="application/json")
 
 @app.route('/api/dotproduct', methods=['POST'])
 def dotproduct():
-    pass
+    try:
+        data = request.get_json(force=True)
+        a = data.get("a", [])
+        b = data.get("b", [])
 
-# route http posts to this method
+        if len(a) != len(b):
+            response = {"error": "Vectors must be same length", "dotproduct": 0.0}
+            response_pickled = jsonpickle.encode(response)
+            return Response(response=response_pickled, status=400, mimetype="application/json")
+
+        dp = 0.0
+        for i in range(len(a)):
+            dp += float(a[i]) * float(b[i])
+
+        response = {"dotproduct": dp}
+        response_pickled = jsonpickle.encode(response)
+        return Response(response=response_pickled, status=200, mimetype="application/json")
+
+    except Exception as e:
+        response = {"error": str(e), "dotproduct": 0.0}
+        response_pickled = jsonpickle.encode(response)
+        return Response(response=response_pickled, status=400, mimetype="application/json")
+
 @app.route('/api/jsonimage', methods=['POST'])
 def jsonimage():
-    pass
+    try:
+        data = request.get_json(force=True)
+        img_b64 = data.get("image", "")
+
+        img_bytes = base64.b64decode(img_b64)
+        ioBuffer = io.BytesIO(img_bytes)
+        img = Image.open(ioBuffer)
+
+        response = {"width": img.size[0], "height": img.size[1]}
+        response_pickled = jsonpickle.encode(response)
+        return Response(response=response_pickled, status=200, mimetype="application/json")
+
+    except Exception as e:
+        response = {"error": str(e), "width": 0, "height": 0}
+        response_pickled = jsonpickle.encode(response)
+        return Response(response=response_pickled, status=400, mimetype="application/json")
 
 # start flask app
 app.run(host="0.0.0.0", port=5000)
