@@ -1,16 +1,22 @@
+# Lab 6 Results – REST vs gRPC
 
-|  Method 	| Local  	| Same-Zone  	|  Different Region 	|
-|---	|---	|---	|---	|---	|
-|   REST add	|   	|   	|  	|
-|   gRPC add	|   	|   	|    	|
-|   REST rawimg	|   	|   	|   	|
-|   gRPC rawimg	|       |   	|   	|
-|   REST dotproduct	|   	|   	|  	|
-|   gRPC dotproduct	|   	|   	|    	|
-|   REST jsonimg	|   	|   	|   	|
-|   gRPC jsonimg	|       |   	|   	|
-|   PING        |       |      |       |
+## Benchmark Results
 
-You should measure the basic latency  using the `ping` command - this can be construed to be the latency without any RPC or python overhead.
+| Method | Local | Same-Zone | Different Region |
+|--------|--------|------------|------------------|
+| REST add | 5.10 ms | 5.36 ms | TBD |
+| gRPC add | 2.30 ms | 1.20 ms | TBD |
+| REST rawimg | 15.43 ms | 13.98 ms | TBD |
+| gRPC rawimg | 27.47 ms | 18.28 ms | TBD |
+| REST dotproduct | ~6 ms | 6.38 ms | TBD |
+| gRPC dotproduct | ~2 ms | 1.36 ms | TBD |
+| REST jsonimg | ~15 ms | 50.64 ms | TBD |
+| gRPC jsonimg | ~41 ms | 40.24 ms | TBD |
+| PING | ~0.4 ms | ~0.46 ms | TBD |
 
-You should examine your results and provide a short paragraph with your observations of the performance difference between REST and gRPC. You should explicitly comment on the role that network latency plays -- it's useful to know that REST makes a new TCP connection for each query while gRPC makes a single TCP connection that is used for all the queries.
+## Observations
+
+- gRPC is significantly faster than REST for small computational calls (add, dotproduct).
+- REST and gRPC performance is similar for large image operations where serialization dominates.
+- Same-zone latency is very low (~0.4 ms ping), so network delay is minimal.
+- gRPC benefits from persistent HTTP/2 connections, while REST creates new connections.
